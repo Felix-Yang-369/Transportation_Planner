@@ -131,6 +131,14 @@ struct COpenStreetMap::SImplementation{
 
     bool ParseWays(std::shared_ptr<CXMLReader> src, SXMLEntity &firstentity){
         SXMLEntity TempEntity;
+        if(firstentity.DType == SXMLEntity::EType::StartElement && firstentity.DNameData == "way"){
+            TempEntity = firstentity;
+        }
+        else{
+            if(!src->ReadEntity(TempEntity)){
+                return true;
+            }
+        }
         while (true){
             if(TempEntity.DType == SXMLEntity::EType::StartElement && TempEntity.DNameData == "way"){
                 auto WayID=std::stoull(TempEntity.AttributeValue("id"));
@@ -142,7 +150,7 @@ struct COpenStreetMap::SImplementation{
                         auto RefID=std::stoull(TempEntity.AttributeValue("ref"));
                         NewWay->DNodeIDs.push_back(RefID);
                     }
-                    else if (TempEntity.DType==SXMLEntity::EType::StartElement && TempEntity.DNameData=="way"){
+                    else if (TempEntity.DType==SXMLEntity::EType::EndElement && TempEntity.DNameData=="way"){
                         break;
                     }
                 }
