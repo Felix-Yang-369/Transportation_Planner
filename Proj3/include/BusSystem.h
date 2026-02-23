@@ -7,7 +7,7 @@ class CBusSystem{
     public:
         using TStopID = uint64_t;
 
-        static const TStopID InvalidStopID = std::numeric_limits<TStopID>::max();
+        static inline const TStopID InvalidStopID = std::numeric_limits<TStopID>::max();
 
         struct SStop{
             virtual ~SStop(){};
