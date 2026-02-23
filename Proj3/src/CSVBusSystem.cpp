@@ -6,14 +6,14 @@
 struct CCSVBusSystem::SImplementation{
 
     struct SStop: public CBusSystem::SStop{
-        TStopID DID;
+        TStopID DID; 
         CStreetMap::TNodeID DNodeID;
 
         ~SStop() override {
 
         }
 
-        TStopID ID() const noexcept override {
+        TStopID ID() const noexcept override {  // Returns the unique stop ID
             return DID;
         }
 
@@ -58,7 +58,8 @@ struct CCSVBusSystem::SImplementation{
 
     bool ReadStops(std::shared_ptr< CDSVReader > stopsrc){
         std::vector<std::string> TempRow;
-
+        
+        // Parse header row to find column indices dynamically
         if(stopsrc->ReadRow(TempRow)){
             size_t StopColumn = -1;
             size_t NodeColumn = -1;
