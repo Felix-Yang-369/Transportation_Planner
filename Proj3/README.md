@@ -1,21 +1,22 @@
 # Project X README
 
-Student 1: Partner1 Name (123456789)
+Student 1: Linjie Yang (923779926)
 
-Student 2: Partner2 Name (123456987)
+Student 2: Ruoyu Xi (923235075)
 
 ## Project Status
-This the current status of the project ...
+The project is completely implemented and functioning as expected. We have successfully integrated the `DSV` and `XML` parsers from Project 2, and 'StrtingUtil" from Project 1.
 
 ## Known Issues
-The project fails to function properly in ...
+There are no major known issues at this time.
 
 ## Code References
 * [Different ways to initialize variables](https://stackoverflow.com/questions/22543875/different-ways-to-initialize-variables)
-* [Some other link](https://stackoverflow.com)
+* [Google Test Primer (for writing unit tests)](https://google.github.io/googletest/primer.html)
+* [Expat XML Parser Documentation](https://libexpat.github.io/doc/)
 
 ## Generative AI Use
-I used ChatGPT for Prompt 1, and ZZZZZ for Prompt 2....
+I used ChatGPT for Prompt 1, and hatGPT for Prompt 2 to assist with code debugging and test case design.
 
 ### Prompt 1
 How do I iterate over all characters in a string in C++17?
@@ -49,10 +50,12 @@ for (char c : bar) {
 ```
 
 ### Prompt 2
-My other prompt...
+My COpenStreetMap implementation uses two separate while loops (ParseNodes and ParseWays) to read the XML file, but it drops the <tag> attributes and exhausts the stream before ParseWays can read anything. How to fix this?
 
 ### Response 2
-The other response...
+The issue occurs because the CXMLReader acts like a single-pass forward stream. Once your first while loop finishes reading all nodes, the end of the file is reached. To fix this and capture nested <tag> attributes, you should combine the logic into a single global pass.
+
+Use a single while(src->ReadEntity(TempEntity)) loop. Keep a temporary shared_ptr for the CurrentNode and CurrentWay. When you encounter a <node> or <way>, update the pointer. When you encounter a <tag>, attach it to whichever pointer is currently active. When you encounter </node> or </way>, set the pointer back to nullptr.
 
 ### Changes 2
-The other changes made...
+I completely refactored the SImplementation in OpenStreetMap.cpp. I removed the separate ParseNodes and ParseWays functions and implemented the AI's suggested single-pass state machine logic directly inside ParseOpenStreetMap.
