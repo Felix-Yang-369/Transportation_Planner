@@ -30,3 +30,68 @@ TEST(OSMTest, SimpleFiles){
     EXPECT_EQ(TempNode->Location(),std::make_pair(38.5,-121.7));
 
 }
+
+TEST(OSMTest, EmptyOSM){
+    auto OSMDataSource = std::make_shared< CStringDataSource >(
+        "<?xml version='1.0' encoding='UTF-8'?>\n"
+        "<osm version=\"0.6\"></osm>\n"
+    );
+    auto OSMReader = std::make_shared< CXMLReader >(OSMDataSource);
+    COpenStreetMap OpenStreetMap(OSMReader);
+
+    EXPECT_EQ(OpenStreetMap.NodeCount(),0);
+    EXPECT_EQ(OpenStreetMap.WayCount(),0);
+    EXPECT_EQ(OpenStreetMap.NodeByIndex(0),nullptr);
+    EXPECT_EQ(OpenStreetMap.WayByIndex(0),nullptr);
+    EXPECT_EQ(OpenStreetMap.NodeByID(1),nullptr);
+    EXPECT_EQ(OpenStreetMap.WayByID(100),nullptr);
+}
+
+TEST(OSMTest, NodeLookup){
+    auto OSMDataSource = std::make_shared< CStringDataSource >(
+        "<?xml version='1.0' encoding='UTF-8'?>\n"
+        "<osm version=\"0.6\">\n"
+        "  <node id=\"1\" lat=\"10.0\" lon=\"20.0\"/>\n"
+        "  <node id=\"2\" lat=\"30.0\" lon=\"40.0\"/>\n"
+        "</osm>\n"
+    );
+    auto OSMReader = std::make_shared< CXMLReader >(OSMDataSource);
+    COpenStreetMap OpenStreetMap(OSMReader);
+
+    EXPECT_EQ(OpenStreetMap.NodeCount(),2);
+
+    auto TempNode1 = OpenStreetMap.NodeByID(1);
+    auto TempNode2 = OpenStreetMap.NodeByID(2);
+    ASSERT_NE(TempNode1,nullptr);
+    ASSERT_NE(TempNode2,nullptr);
+
+    EXPECT_EQ(TempNode1, OpenStreetMap.NodeByIndex(0));
+    EXPECT_EQ(TempNode2, OpenStreetMap.NodeByIndex(1));
+    EXPECT_EQ(OpenStreetMap.NodeByID(9999), nullptr);
+}
+
+TEST(OSMTest, WayNDOrder){
+    auto OSMDataSource = std::make_shared< CStringDataSource >(
+        "<?xml version='1.0' encoding='UTF-8'?>\n"
+        "<osm version=\"0.6\">\n"
+        "  <node id=\"1\" lat=\"0\" lon=\"0\"/>\n"
+        "  <node id=\"2\" lat=\"0\" lon=\"0\"/>\n"
+        "  <way id=\"100\">\n"
+        "    <nd ref=\"2\"/>\n"
+        "    <nd ref=\"1\"/>\n"
+        "  </way>\n"
+        "</osm>\n"
+    );
+    auto OSMReader = std::make_shared< CXMLReader >(OSMDataSource);
+    COpenStreetMap OpenStreetMap(OSMReader);
+
+    EXPECT_EQ(OpenStreetMap.WayCount(),1);
+
+    auto TempWay = OpenStreetMap.WayByID(100);
+    ASSERT_NE(TempWay,nullptr);
+
+    EXPECT_EQ(TempWay->NodeCount(),2);
+    EXPECT_EQ(TempWay->GetNodeID(0),2);
+    EXPECT_EQ(TempWay->GetNodeID(1),1);
+    EXPECT_EQ(TempWay->GetNodeID(2),CStreetMap::InvalidNodeID);
+}
