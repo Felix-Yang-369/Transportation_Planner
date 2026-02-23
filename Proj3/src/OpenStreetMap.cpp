@@ -11,60 +11,93 @@ struct COpenStreetMap::SImplementation{
     struct SNode: public CStreetMap::SNode{
         TNodeID DID;
         TLocation DLocation;
+        std::vector<std::pair<std::string, std::string>> DAttributes;
         ~SNode(){};
         TNodeID ID() const noexcept override{
-
+            return DID;
         }
 
         TLocation Location() const noexcept override{
-
+            return DLocation;
         }
 
         std::size_t AttributeCount() const noexcept override{
-
+            return DAttributes.size();
         }
 
         std::string GetAttributeKey(std::size_t index) const noexcept override{
-
+            if (index>= DAttributes.size()) {
+                return "";
+            }
+            return DAttributes[index].first;
         }
 
         bool HasAttribute(const std::string &key) const noexcept override{
-
+            for (const auto &kv : DAttributes) {
+                if (kv.first==key) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         std::string GetAttribute(const std::string &key) const noexcept override{
-
+            for (const auto &kv : DAttributes) {
+                if (kv.first==key) {
+                    return kv.second;
+                }
+            }
+            return "";
         }
     };
 
     struct SWay: public CStreetMap::SWay{
+        TWayID DID;
+        std::vector<TNodeID> DNodeIDs;
+        std::vector<std::pair<std::string, std::string>> DAttributes;
         ~SWay(){};
         TWayID ID() const noexcept override{
-
+            return DID;
         }
 
         std::size_t NodeCount() const noexcept override{
-
+            return DNodeIDs.size();
         }
 
         TNodeID GetNodeID(std::size_t index) const noexcept override{
-
+            if (index >= DNodeIDs.size()) {
+                return CStreetMap::InvalidNodeID;
+            }
+            return DNodeIDs[index];
         }
 
         std::size_t AttributeCount() const noexcept override{
-
+            return DAttributes.size();
         }
 
         std::string GetAttributeKey(std::size_t index) const noexcept override{
-
+            if (index>=DAttributes.size()) {
+                return "";
+            }
+            return DAttributes[index].first;
         }
 
         bool HasAttribute(const std::string &key) const noexcept override{
-
+            for (const auto &kv : DAttributes) {
+                if (kv.first==key) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         std::string GetAttribute(const std::string &key) const noexcept override{
-
+            for (const auto &kv : DAttributes) {
+                if (kv.first==key) {
+                    return kv.second;
+                }
+            }
+            return "";
         }
     };
     std::vector<std::shared_ptr<SNode>> DNodesByIndex;
