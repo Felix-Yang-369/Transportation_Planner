@@ -1,5 +1,6 @@
-# Project X README
+<img width="260" height="226" alt="image" src="https://github.com/user-attachments/assets/3430c2cc-d373-4d4e-9e7e-34070234b1f1" />
 
+# Project Introduction
 Student 1: Linjie Yang (923779926)
 
 Student 2: Ruoyu Xi (923235075)
