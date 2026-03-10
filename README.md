@@ -1,9 +1,10 @@
-<img width="260" height="226" alt="image" src="https://github.com/user-attachments/assets/3430c2cc-d373-4d4e-9e7e-34070234b1f1" />
+<img align="right" width="260" height="226" src="https://github.com/user-attachments/assets/3430c2cc-d373-4d4e-9e7e-34070234b1f1">
 
 # Project Introduction
-Student 1: Linjie Yang (923779926)
+**Student 1:** Linjie Yang (923779926)  
+**Student 2:** Ruoyu Xi (923235075)
 
-Student 2: Ruoyu Xi (923235075)
+<br clear="right"/>
 
 ## Project Status
 The project is completely implemented and functioning as expected. We have successfully integrated the `DSV` and `XML` parsers from Project 2, and 'StrtingUtil" from Project 1.
