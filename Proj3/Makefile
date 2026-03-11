@@ -79,7 +79,7 @@ run_strsinktest: $(TEST_STRSINK_TARGET)
 	mv $(TESTTMP_DIR)/$@ $@
 
 run_filesstest: $(TEST_FILESS_TARGET)
-    $(TEST_FILESS_TARGET) --gtest_output=xml:$(TESTTMP_DIR)/$@
+	$(TEST_FILESS_TARGET) --gtest_output=xml:$(TESTTMP_DIR)/$@
 	mv $(TESTTMP_DIR)/$@ $@
 
 run_geoutilstest: $(TEST_GEOUTILS_TARGET)
