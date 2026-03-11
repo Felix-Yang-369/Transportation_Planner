@@ -3,21 +3,24 @@
 #include <unordered_map>
 #include <algorithm>
 
+// Implementation struct that stores all indexing data
 struct CBusSystemIndexer::SImplementation{
-    std::shared_ptr<CBusSystem> DBusSystem;
-    std::vector<std::shared_ptr<SStop>> DSortedStopsByIndex;
-    std::unordered_map<TNodeID,std::shared_ptr<SStop>> DStopsByNodeID;
-    std::vector<std::shared_ptr<SRoute>> DSortedRoutesByIndex;
+    std::shared_ptr<CBusSystem> DBusSystem; 
+    std::vector<std::shared_ptr<SStop>> DSortedStopsByIndex; // Stops sorted by Stop ID
+    std::unordered_map<TNodeID,std::shared_ptr<SStop>> DStopsByNodeID; // Fast lookup: nodeID -> stop
+    std::vector<std::shared_ptr<SRoute>> DSortedRoutesByIndex; // Routes sorted by route name
     
+    // Custom hash for pair<NodeID, NodeID>
     struct SNodeIDPairHash{
         std::size_t operator()(const std::pair<TNodeID,TNodeID> &pair) const{
             std::size_t First = pair.first;
             std::size_t Second = pair.second;
-            return First ^ (Second<<1);
+            return First ^ (Second<<1); 
         }
     };
+    
     std::unordered_map<std::pair<TNodeID,TNodeID>,std::unordered_set<std::shared_ptr<SRoute>>,SNodeIDPairHash> DRoutesByNodeIDs;
-
+    // Build all indices from the bus system
     SImplementation(std::shared_ptr<CBusSystem> bussystem){
         DBusSystem = bussystem;
         for(size_t Index = 0; Index < DBusSystem->StopCount(); Index++){
@@ -35,6 +38,7 @@ struct CBusSystemIndexer::SImplementation{
         std::sort(DSortedRoutesByIndex.begin(), DSortedRoutesByIndex.end(), [](std::shared_ptr<SRoute> l, std::shared_ptr<SRoute> r) -> bool{
             return l->Name() < r->Name();
         });
+        // Build a map of routes between consecutive node pairs
         for(auto Route: DSortedRoutesByIndex){
             for(size_t Index = 1; Index < Route->StopCount(); Index++){
                 auto Previous = Route->GetStopID(Index-1);
@@ -70,14 +74,14 @@ struct CBusSystemIndexer::SImplementation{
         if(index >= DSortedStopsByIndex.size()){
             return nullptr;
         }
-        return DSortedStopsByIndex[index]; // do a check 
+        return DSortedStopsByIndex[index];  
     }
 
     std::shared_ptr<SRoute> SortedRouteByIndex(std::size_t index) const noexcept{
         if(index >= DSortedRoutesByIndex.size()){
             return nullptr;
         }
-        return DSortedRoutesByIndex[index]; // do a check
+        return DSortedRoutesByIndex[index]; 
     }
 
     std::shared_ptr<SStop> StopByNodeID(TNodeID id) const noexcept{
@@ -105,7 +109,7 @@ struct CBusSystemIndexer::SImplementation{
     }
 
 };
-
+// Wrapper functions that forward calls to the implementation
 CBusSystemIndexer::CBusSystemIndexer(std::shared_ptr<CBusSystem> bussystem){
     DImplementation = std::make_unique<SImplementation>(bussystem);
 }
