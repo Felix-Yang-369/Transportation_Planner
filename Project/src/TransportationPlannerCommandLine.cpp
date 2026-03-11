@@ -7,6 +7,7 @@ struct CBusSystemIndexer::SImplementation {
     std::unordered_map<TNodeID, std::shared_ptr<SStop>> NodeIDToStop;
     std::unordered_map<TNodeID, std::unordered_map<TNodeID, std::unordered_set<std::shared_ptr<SRoute>>>> RouteSegments;
 
+    // Constructor
     SImplementation(std::shared_ptr<CBusSystem> bussystem) : BusSystem(bussystem) {
         if (!BusSystem) return;
 
@@ -18,6 +19,7 @@ struct CBusSystemIndexer::SImplementation {
             }
         }
         
+        // Sort stops primarily by their unique Stop ID
         std::sort(SortedStops.begin(), SortedStops.end(), [](const std::shared_ptr<SStop>& a, const std::shared_ptr<SStop>& b) {
             return a->ID() < b->ID();
         });
@@ -37,6 +39,7 @@ struct CBusSystemIndexer::SImplementation {
             }
         }
         
+        // Sort routes alphabetically by their Name
         std::sort(SortedRoutes.begin(), SortedRoutes.end(), [](const std::shared_ptr<SRoute>& a, const std::shared_ptr<SRoute>& b) {
             return a->Name() < b->Name();
         });
@@ -72,6 +75,7 @@ struct CBusSystemIndexer::SImplementation {
         return nullptr;
     }
 
+    // O(1) lookup to find all bus routes that travel directly from 'src' node to 'dest' node
     bool RoutesByNodeIDs(TNodeID src, TNodeID dest, std::unordered_set<std::shared_ptr<SRoute>> &routes) const noexcept {
         auto srcIt = RouteSegments.find(src);
         if (srcIt != RouteSegments.end()) {
@@ -84,6 +88,7 @@ struct CBusSystemIndexer::SImplementation {
         return false;
     }
 
+    // O(1) lookup to check if ANY bus route connects 'src' node to 'dest' node
     bool RouteBetweenNodeIDs(TNodeID src, TNodeID dest) const noexcept {
         auto srcIt = RouteSegments.find(src);
         if (srcIt != RouteSegments.end()) {
@@ -96,6 +101,7 @@ struct CBusSystemIndexer::SImplementation {
     }
 };
 
+// Encapsulation Part (Pimpl Idiom)
 CBusSystemIndexer::CBusSystemIndexer(std::shared_ptr<CBusSystem> bussystem) {
     DImplementation = std::make_unique<SImplementation>(bussystem);
 }
