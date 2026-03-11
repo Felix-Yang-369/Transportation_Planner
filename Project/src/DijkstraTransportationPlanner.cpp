@@ -4,94 +4,86 @@ struct CDijkstraTransportationPlanner::SImplementation {
     std::shared_ptr<SConfiguration> Config;
     std::vector<std::shared_ptr<CStreetMap::SNode>> SortedNodes;
     
-    std::unordered_map<TNodeID, CPathRouter::TVertexID> NodeToVertexID;
-    std::unordered_map<CPathRouter::TVertexID, TNodeID> VertexToNodeID;
+    CDijkstraPathRouter ShortestPathRouter;
+    std::vector<TNodeID> FastNodeIDs;
 
     SImplementation(std::shared_ptr<SConfiguration> config) : Config(config) {
-        if (Config && Config->StreetMap()) {
-            for (std::size_t i = 0; i < Config->StreetMap()->NodeCount(); ++i) {
-                SortedNodes.push_back(Config->StreetMap()->NodeByIndex(i));
-            }
-            std::sort(SortedNodes.begin(), SortedNodes.end(), 
-                [](const std::shared_ptr<CStreetMap::SNode>& a, const std::shared_ptr<CStreetMap::SNode>& b) {
-                    return a->ID() < b->ID();
-                });
-        }
-    }
-
-    std::size_t NodeCount() const noexcept {
-        return SortedNodes.size();
-    }
-
-    std::shared_ptr<CStreetMap::SNode> SortedNodeByIndex(std::size_t index) const noexcept {
-        if (index < SortedNodes.size()) {
-            return SortedNodes[index];
-        }
-        return nullptr;
-    }
-
-    double FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNodeID> &path) {
-        path.clear();
-        if (!Config || !Config->StreetMap()) return CPathRouter::NoPathExists;
-
-        CDijkstraPathRouter Router;
-        NodeToVertexID.clear();
-        VertexToNodeID.clear();
+        if (!Config || !Config->StreetMap()) return;
 
         for (std::size_t i = 0; i < Config->StreetMap()->NodeCount(); ++i) {
-            auto node = Config->StreetMap()->NodeByIndex(i);
-            CPathRouter::TVertexID vID = Router.AddVertex(node->ID());
-            NodeToVertexID[node->ID()] = vID;
-            VertexToNodeID[vID] = node->ID();
+            SortedNodes.push_back(Config->StreetMap()->NodeByIndex(i));
+        }
+        std::sort(SortedNodes.begin(), SortedNodes.end(), 
+            [](const std::shared_ptr<CStreetMap::SNode>& a, const std::shared_ptr<CStreetMap::SNode>& b) {
+                return a->ID() < b->ID();
+            });
+
+
+        FastNodeIDs.reserve(SortedNodes.size());
+        for (const auto& node : SortedNodes) {
+            FastNodeIDs.push_back(node->ID());
+            ShortestPathRouter.AddVertex(node->ID());
         }
 
         for (std::size_t i = 0; i < Config->StreetMap()->WayCount(); ++i) {
             auto way = Config->StreetMap()->WayByIndex(i);
-            bool isOneWay = false;
-            
-            if (way->HasAttribute("oneway") && way->GetAttribute("oneway") == "yes") {
-                isOneWay = true;
-            }
+            bool isOneWay = way->HasAttribute("oneway") && way->GetAttribute("oneway") == "yes";
 
             for (std::size_t j = 0; j < way->NodeCount() - 1; ++j) {
                 TNodeID nodeID1 = way->GetNodeID(j);
                 TNodeID nodeID2 = way->GetNodeID(j + 1);
 
-                auto node1 = Config->StreetMap()->NodeByID(nodeID1);
-                auto node2 = Config->StreetMap()->NodeByID(nodeID2);
+                auto it1 = std::lower_bound(FastNodeIDs.begin(), FastNodeIDs.end(), nodeID1);
+                auto it2 = std::lower_bound(FastNodeIDs.begin(), FastNodeIDs.end(), nodeID2);
 
-                if (node1 && node2) {
-                    double distance = SGeographicUtils::HaversineDistanceInMiles(node1->Location(), node2->Location());
+                if (it1 != FastNodeIDs.end() && *it1 == nodeID1 && 
+                    it2 != FastNodeIDs.end() && *it2 == nodeID2) {
                     
-                    CPathRouter::TVertexID v1 = NodeToVertexID[nodeID1];
-                    CPathRouter::TVertexID v2 = NodeToVertexID[nodeID2];
+                    CPathRouter::TVertexID v1 = std::distance(FastNodeIDs.begin(), it1);
+                    CPathRouter::TVertexID v2 = std::distance(FastNodeIDs.begin(), it2);
 
-                    Router.AddEdge(v1, v2, distance, !isOneWay);
+                    auto node1 = SortedNodes[v1];
+                    auto node2 = SortedNodes[v2];
+
+                    double distance = SGeographicUtils::HaversineDistanceInMiles(node1->Location(), node2->Location());
+                    ShortestPathRouter.AddEdge(v1, v2, distance, !isOneWay);
                 }
             }
         }
 
-        if (NodeToVertexID.find(src) == NodeToVertexID.end() || NodeToVertexID.find(dest) == NodeToVertexID.end()) {
-            return CPathRouter::NoPathExists;
-        }
-
-        std::vector<CPathRouter::TVertexID> routerPath;
-        double shortestDistance = Router.FindShortestPath(NodeToVertexID[src], NodeToVertexID[dest], routerPath);
-
-        if (shortestDistance == CPathRouter::NoPathExists) {
-            return CPathRouter::NoPathExists;
-        }
-
-        for (auto vID : routerPath) {
-            path.push_back(VertexToNodeID[vID]);
-        }
-
-        return shortestDistance;
+        ShortestPathRouter.Precompute(std::chrono::steady_clock::now());
     }
 
-    double FindFastestPath(TNodeID src, TNodeID dest, std::vector<TTripStep> &path) {
+    std::size_t NodeCount() const noexcept { return SortedNodes.size(); }
+    std::shared_ptr<CStreetMap::SNode> SortedNodeByIndex(std::size_t index) const noexcept {
+        return (index < SortedNodes.size()) ? SortedNodes[index] : nullptr;
+    }
+
+    double FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNodeID> &path) {
         path.clear();
-        return CPathRouter::NoPathExists; 
+        
+        // find adrress with O(log N)
+        auto it_src = std::lower_bound(FastNodeIDs.begin(), FastNodeIDs.end(), src);
+        auto it_dest = std::lower_bound(FastNodeIDs.begin(), FastNodeIDs.end(), dest);
+
+        if (it_src == FastNodeIDs.end() || *it_src != src || 
+            it_dest == FastNodeIDs.end() || *it_dest != dest) {
+            return CPathRouter::NoPathExists;
+        }
+
+        CPathRouter::TVertexID vSrc = std::distance(FastNodeIDs.begin(), it_src);
+        CPathRouter::TVertexID vDest = std::distance(FastNodeIDs.begin(), it_dest);
+
+        std::vector<CPathRouter::TVertexID> routerPath;
+        double dist = ShortestPathRouter.FindShortestPath(vSrc, vDest, routerPath);
+
+        if (dist != CPathRouter::NoPathExists) {
+            path.reserve(routerPath.size());
+            for (auto vID : routerPath) {
+                path.push_back(FastNodeIDs[vID]); // O(1)
+            }
+        }
+        return dist;
     }
 
 
