@@ -1,4 +1,4 @@
-# Project X README
+# Project 4 README
 
 Student 1: Linjie Yang (923779926)
 
