@@ -21,7 +21,22 @@ struct CDijkstraPathRouter::SImplementation{
         return DVertices.size();
     }
 
-    TVertexID AddVertex(std::any tag) noexcept{
+    CPathRouter::TVertexID AddVertex(std::any tag) noexcept {
+        auto NewVertex = std::make_shared<SVertex>();
+        NewVertex->DTag = std::move(tag);
+        CPathRouter::TVertexID NewID = DVertices.size();
+        DVertices.push_back(NewVertex);
+        return NewID;
+    }
+
+    std::any GetVertexTag(TVertexID id) const noexcept{
+        if(id < DVertices.size()){
+            return DVertices[id]->DTag;
+        }
+        return std::any();
+    }
+
+    bool AddEdge(CPathRouter::TVertexID src, CPathRouter::TVertexID dest, double weight, bool bidir) noexcept {
         if (weight < 0.0 || src >= DVertices.size() || dest >= DVertices.size()) {
             return false; 
         }
@@ -32,24 +47,6 @@ struct CDijkstraPathRouter::SImplementation{
             DVertices[dest]->DEdges.push_back(std::make_pair(weight, src));
         }
         return true;
-    }
-
-    std::any GetVertexTag(TVertexID id) const noexcept{
-        if(id < DVertices.size()){
-            return DVertices[id]->DTag;
-        }
-        return std::any();
-    }
-
-    bool AddEdge(TVertexID src, TVertexID dest, double weight, bool bidir = false) noexcept{
-        if(src < DVertices.size() && dest < DVertices.size()){
-            DVertices[src]->DEdges.push_back(std::make_pair(weight,DVertices[dest]));
-            if(bidir){
-                DVertices[dest]->DEdges.push_back(std::make_pair(weight,DVertices[src]));
-            }
-            return true;
-        }
-        return false;
     }
 
     bool Precompute(std::chrono::steady_clock::time_point deadline) noexcept{
