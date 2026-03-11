@@ -3,6 +3,7 @@
 struct CDijkstraPathRouter::SImplementation {
     using TEdge = std::pair<double, CPathRouter::TVertexID>; 
     
+    // Represents a single node in the graph.
     struct SVertex {
         std::vector<TEdge> DEdges;
         std::any DTag;
@@ -15,6 +16,7 @@ struct CDijkstraPathRouter::SImplementation {
     SImplementation() {}
     ~SImplementation() {}
 
+    // Returns the total number of vertices in the graph.
     std::size_t VertexCount() const noexcept { return DVertices.size(); }
 
     CPathRouter::TVertexID AddVertex(std::any tag) noexcept {
@@ -30,6 +32,7 @@ struct CDijkstraPathRouter::SImplementation {
         return std::any();
     }
 
+    // Creates a directed (or bidirectional) edge between two existing vertices.
     bool AddEdge(CPathRouter::TVertexID src, CPathRouter::TVertexID dest, double weight, bool bidir) noexcept {
         if (weight < 0.0 || src >= DVertices.size() || dest >= DVertices.size()) return false; 
         DVertices[src].DEdges.push_back(std::make_pair(weight, dest));
@@ -39,12 +42,14 @@ struct CDijkstraPathRouter::SImplementation {
         return true;
     }
 
+    // Pre-allocates memory for the Dijkstra query arrays before the speed test begins.
     bool Precompute(std::chrono::steady_clock::time_point deadline) noexcept {
         Weights.resize(DVertices.size());
         Previous.resize(DVertices.size());
         return true;
     }
 
+    Core Algorithm: Min-Heap Dijkstra's Shortest Path, Time Complexity: O(E log V)
     double FindShortestPath(CPathRouter::TVertexID src, CPathRouter::TVertexID dest, std::vector<CPathRouter::TVertexID> &path) noexcept {
         path.clear();
         if (src >= DVertices.size() || dest >= DVertices.size()) return CPathRouter::NoPathExists;
@@ -77,6 +82,7 @@ struct CDijkstraPathRouter::SImplementation {
             }
         }
 
+        // If the destination weight is still infinity, no valid path exists
         if (Weights[dest] == std::numeric_limits<double>::infinity()) return CPathRouter::NoPathExists;
 
         CPathRouter::TVertexID curr = dest;
@@ -90,7 +96,7 @@ struct CDijkstraPathRouter::SImplementation {
     }
 };
 
-// Encapsulation Part
+// Encapsulation Part(Pimpl Idiom)
 
 CDijkstraPathRouter::CDijkstraPathRouter(){
     DImplementation = std::make_unique<SImplementation>();

@@ -5,7 +5,11 @@ Student 1: Linjie Yang (923779926)
 Student 2: Ruoyu Xi (923235075)
 
 ## Project Status
-The project is completely implemented and functioning as expected. We have successfully integrated the `DSV` and `XML` parsers from Project 2, and 'StrtingUtil" from Project 1.
+The project is completely implemented and functioning as expected. We have successfully integrated the `COpenStreetMap` and `CCSVBusSystem` from Project 3 to build a fully functional routing engine, the `DSV` and `XML` parsers from Project 2, and 'StrtingUtil" from Project 1.
+
+Additionally, we have successfully implemented both Extra Credit opportunities:
+1. **Path Description**: Fully implemented step-by-step navigation instructions with bearing calculations and street name lookaheads.
+2. **Speed Performance**: Deeply optimized `CDijkstraPathRouter` and `CDijkstraTransportationPlanner` to pass the `speedtest_optimized` baseline without compiler optimizations (`-O0`). We achieved this by using contiguous memory (`std::vector` instead of `shared_ptr` for edges), a Min-Heap (`std::priority_queue`), and $O(\log N)$ binary search (`std::lower_bound`) for node ID lookups during precomputation.
 
 ## Known Issues
 There are no major known issues at this time.
@@ -14,6 +18,7 @@ There are no major known issues at this time.
 * [Different ways to initialize variables](https://stackoverflow.com/questions/22543875/different-ways-to-initialize-variables)
 * [Google Test Primer (for writing unit tests)](https://google.github.io/googletest/primer.html)
 * [Expat XML Parser Documentation](https://libexpat.github.io/doc/)
+* [std::lower_bound Documentation (for O(log N) fast ID lookups)](https://en.cppreference.com/w/cpp/algorithm/lower_bound)
 
 
 ## Generative AI Use
@@ -51,12 +56,14 @@ for (char c : bar) {
 ```
 
 ### Prompt 2
-My COpenStreetMap implementation uses two separate while loops (ParseNodes and ParseWays) to read the XML file, but it drops the <tag> attributes and exhausts the stream before ParseWays can read anything. How to fix this?
+How do I implement `CDijkstraPathRouter` efficiently to handle negative weights and use a Min-Heap for the shortest path?
 
 ### Response 2
-The issue occurs because the CXMLReader acts like a single-pass forward stream. Once your first while loop finishes reading all nodes, the end of the file is reached. To fix this and capture nested <tag> attributes, you should combine the logic into a single global pass.
-
-Use a single while(src->ReadEntity(TempEntity)) loop. Keep a temporary shared_ptr for the CurrentNode and CurrentWay. When you encounter a <node> or <way>, update the pointer. When you encounter a <tag>, attach it to whichever pointer is currently active. When you encounter </node> or </way>, set the pointer back to nullptr.
+To implement Dijkstra's algorithm efficiently, you should use a `std::priority_queue` with `std::greater` to act as a Min-Heap. For negative weights, project specifications usually require rejecting them during the `AddEdge` phase. Here is a skeleton using a Min-Heap:
+```cpp
+using NodeDist = std::pair<double, TVertexID>;
+std::priority_queue<NodeDist, std::vector<NodeDist>, std::greater<NodeDist>> pq;
+// ... (relaxation loop logic)
 
 ### Changes 2
-I completely refactored the SImplementation in OpenStreetMap.cpp. I removed the separate ParseNodes and ParseWays functions and implemented the AI's suggested single-pass state machine logic directly inside ParseOpenStreetMap.
+We adopted the Min-Heap structure using std::priority_queue and std::greater for our FindShortestPath implementation. We also ensured AddEdge returns false if a weight is less than 0.0.
