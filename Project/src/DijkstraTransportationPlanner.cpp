@@ -1,12 +1,14 @@
 #include "DijkstraTransportationPlanner.h"
 
+// Implementation that stores graph data and routing logic
 struct CDijkstraTransportationPlanner::SImplementation {
-    std::shared_ptr<SConfiguration> Config;
-    std::vector<std::shared_ptr<CStreetMap::SNode>> SortedNodes;
+    std::shared_ptr<SConfiguration> Config; 
+    std::vector<std::shared_ptr<CStreetMap::SNode>> SortedNodes; // nodes sorted by node ID for binary search
     
-    CDijkstraPathRouter ShortestPathRouter;
-    std::vector<TNodeID> FastNodeIDs;
-
+    CDijkstraPathRouter ShortestPathRouter; // router used to compute shortest paths
+    std::vector<TNodeID> FastNodeIDs; 
+    
+    // Build graph from the street map and initialize router
     SImplementation(std::shared_ptr<SConfiguration> config) : Config(config) {
         if (!Config || !Config->StreetMap()) return;
 
@@ -20,12 +22,13 @@ struct CDijkstraTransportationPlanner::SImplementation {
 
 
         FastNodeIDs.reserve(SortedNodes.size());
+        // Add every node as a vertex in the router
         for (const auto& node : SortedNodes) {
             FastNodeIDs.push_back(node->ID());
             ShortestPathRouter.AddVertex(node->ID());
         }
 
-        for (std::size_t i = 0; i < Config->StreetMap()->WayCount(); ++i) {
+        for (std::size_t i = 0; i < Config->StreetMap()->WayCount(); ++i) { // Build graph edges from street map ways
             auto way = Config->StreetMap()->WayByIndex(i);
             bool isOneWay = way->HasAttribute("oneway") && way->GetAttribute("oneway") == "yes";
 
@@ -59,7 +62,7 @@ struct CDijkstraTransportationPlanner::SImplementation {
         return (index < SortedNodes.size()) ? SortedNodes[index] : nullptr;
     }
 
-    double FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNodeID> &path) {
+    double FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNodeID> &path) { // Find shortest path using the router
         path.clear();
         
         // find adrress with O(log N)
