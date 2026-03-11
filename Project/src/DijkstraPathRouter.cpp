@@ -1,68 +1,56 @@
 #include "DijkstraPathRouter.h"
 
-struct CDijkstraPathRouter::SImplementation{
-    struct SVertex;
-    using TEdge = std::pair<double, CPathRouter::TVertexID>;
-
-    struct SVertex{
+struct CDijkstraPathRouter::SImplementation {
+    using TEdge = std::pair<double, CPathRouter::TVertexID>; 
+    
+    struct SVertex {
         std::vector<TEdge> DEdges;
         std::any DTag;
     };
-    std::vector<std::shared_ptr<SVertex>> DVertices;
+    
+    std::vector<SVertex> DVertices;
+    std::vector<double> Weights;
+    std::vector<CPathRouter::TVertexID> Previous;
 
-    SImplementation(){
+    SImplementation() {}
+    ~SImplementation() {}
 
-    }
-    ~SImplementation(){
-
-    }
-
-    std::size_t VertexCount() const noexcept{
-        return DVertices.size();
-    }
+    std::size_t VertexCount() const noexcept { return DVertices.size(); }
 
     CPathRouter::TVertexID AddVertex(std::any tag) noexcept {
-        auto NewVertex = std::make_shared<SVertex>();
-        NewVertex->DTag = std::move(tag);
         CPathRouter::TVertexID NewID = DVertices.size();
-        DVertices.push_back(NewVertex);
+        SVertex NewVertex;
+        NewVertex.DTag = std::move(tag);
+        DVertices.push_back(std::move(NewVertex));
         return NewID;
     }
 
-    std::any GetVertexTag(TVertexID id) const noexcept{
-        if(id < DVertices.size()){
-            return DVertices[id]->DTag;
-        }
+    std::any GetVertexTag(CPathRouter::TVertexID id) const noexcept {
+        if (id < DVertices.size()) return DVertices[id].DTag;
         return std::any();
     }
 
     bool AddEdge(CPathRouter::TVertexID src, CPathRouter::TVertexID dest, double weight, bool bidir) noexcept {
-        if (weight < 0.0 || src >= DVertices.size() || dest >= DVertices.size()) {
-            return false; 
-        }
-        
-        DVertices[src]->DEdges.push_back(std::make_pair(weight, dest));
-        
+        if (weight < 0.0 || src >= DVertices.size() || dest >= DVertices.size()) return false; 
+        DVertices[src].DEdges.push_back(std::make_pair(weight, dest));
         if (bidir) {
-            DVertices[dest]->DEdges.push_back(std::make_pair(weight, src));
+            DVertices[dest].DEdges.push_back(std::make_pair(weight, src));
         }
         return true;
     }
 
-    bool Precompute(std::chrono::steady_clock::time_point deadline) noexcept{
+    bool Precompute(std::chrono::steady_clock::time_point deadline) noexcept {
+        Weights.resize(DVertices.size());
+        Previous.resize(DVertices.size());
         return true;
     }
 
-    // Core Function to Find the Shortest Path
-    double FindShortestPath(TVertexID src, TVertexID dest, std::vector<TVertexID> &path) noexcept{
+    double FindShortestPath(CPathRouter::TVertexID src, CPathRouter::TVertexID dest, std::vector<CPathRouter::TVertexID> &path) noexcept {
         path.clear();
-        
-        if (src >= DVertices.size() || dest >= DVertices.size()) {
-            return CPathRouter::NoPathExists;
-        }
+        if (src >= DVertices.size() || dest >= DVertices.size()) return CPathRouter::NoPathExists;
 
-        std::vector<double> Weights(DVertices.size(), std::numeric_limits<double>::infinity());
-        std::vector<CPathRouter::TVertexID> Previous(DVertices.size(), std::numeric_limits<CPathRouter::TVertexID>::max());
+        std::fill(Weights.begin(), Weights.end(), std::numeric_limits<double>::infinity());
+        std::fill(Previous.begin(), Previous.end(), std::numeric_limits<CPathRouter::TVertexID>::max());
         
         using NodeDist = std::pair<double, CPathRouter::TVertexID>;
         std::priority_queue<NodeDist, std::vector<NodeDist>, std::greater<NodeDist>> pq;
@@ -75,10 +63,9 @@ struct CDijkstraPathRouter::SImplementation{
             pq.pop();
 
             if (current_u == dest) break;
-
             if (current_dist > Weights[current_u]) continue;
 
-            for (const auto& edge : DVertices[current_u]->DEdges) {
+            for (const auto& edge : DVertices[current_u].DEdges) {
                 double edge_weight = edge.first;
                 CPathRouter::TVertexID neighbor_v = edge.second;
 
@@ -90,9 +77,7 @@ struct CDijkstraPathRouter::SImplementation{
             }
         }
 
-        if (Weights[dest] == std::numeric_limits<double>::infinity()) {
-            return CPathRouter::NoPathExists;
-        }
+        if (Weights[dest] == std::numeric_limits<double>::infinity()) return CPathRouter::NoPathExists;
 
         CPathRouter::TVertexID curr = dest;
         while (curr != std::numeric_limits<CPathRouter::TVertexID>::max()) {
@@ -100,9 +85,7 @@ struct CDijkstraPathRouter::SImplementation{
             if (curr == src) break;
             curr = Previous[curr];
         }
-        
         std::reverse(path.begin(), path.end());
-
         return Weights[dest];
     }
 };
