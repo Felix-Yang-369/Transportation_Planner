@@ -12,6 +12,7 @@ class CStreetMap{
         using TNodeID = uint64_t;
         using TWayID = uint64_t;
         using TLocation = std::pair<double, double>;
+        using SLocation = TLocation;
 
         static constexpr TNodeID InvalidNodeID = std::numeric_limits<TNodeID>::max();
         static constexpr TWayID InvalidWayID = std::numeric_limits<TWayID>::max();
