@@ -11,6 +11,7 @@ struct CDSVReader::SImplementation{
         DSource = src;
         DDelimiter = delimiter;
     }
+
     // Read one value from the data source
     bool ParseValue(std::string &val){
         bool InQuotes = false;
@@ -49,6 +50,7 @@ struct CDSVReader::SImplementation{
     bool End() const{
         return DSource->End();
     }
+    
     // Read one full row of values
     bool ReadRow(std::vector<std::string> &row){
         row.clear();
