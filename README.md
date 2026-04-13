@@ -6,8 +6,9 @@
 
 ## 👥 Contributors
 <img align="right" width="260" src="https://github.com/user-attachments/assets/3430c2cc-d373-4d4e-9e7e-34070234b1f1">
-- **Linjie Yang** (UC Davis - Applied Mathematics & Computer Science)
-- **Ruoyu Xi** (UC Davis)
+
+* **Linjie Yang** (UC Davis - Applied Mathematics & Computer Science)
+* **Ruoyu Xi** (UC Davis - Computer Science)
 
 ## 📌 Project Overview
 A robust C++ command-line application designed to calculate optimal travel routes across a city using multi-modal transportation data. The system integrates real-world geographical data from **OpenStreetMap (OSM)** and public transit information from **Bus System** datasets.
