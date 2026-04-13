@@ -3,9 +3,9 @@
 [![Language](https://img.shields.io/badge/Language-C%2B%2B-blue.svg)](#)
 [![Algorithm](https://img.shields.io/badge/Algorithm-Dijkstra%20%2F%20A*-orange.svg)](#)
 [![Course](https://img.shields.io/badge/UC_Davis-ECS_34-navy.svg)](#)
+<img align="right" width="260" src="https://github.com/user-attachments/assets/3430c2cc-d373-4d4e-9e7e-34070234b1f1">
 
 ## 👥 Contributors
-<img align="right" width="260" src="https://github.com/user-attachments/assets/3430c2cc-d373-4d4e-9e7e-34070234b1f1">
 
 * **Linjie Yang** (UC Davis - Applied Mathematics & Computer Science)
 * **Ruoyu Xi** (UC Davis - Computer Science)
